@@ -1,0 +1,35 @@
+services:
+  pigeon-alpha:
+    image: saiteja/pigeon-node:v2.0
+    container_name: pigeon-alpha
+    network_mode: "host"
+    environment:
+      - PIGEON_ID=pigeon-alpha
+    volumes:
+      - alpha_data:/root/.ethereum
+    command: ["--sepolia", "--syncmode", "snap", "--maxpeers", "50", "--port", "30301", "--authrpc.port", "8551"]
+
+  pigeon-beta:
+    image: saiteja/pigeon-node:v2.0
+    container_name: pigeon-beta
+    network_mode: "host"
+    environment:
+      - PIGEON_ID=pigeon-beta
+    volumes:
+      - beta_data:/root/.ethereum
+    command: ["--sepolia", "--syncmode", "snap", "--maxpeers", "50", "--port", "30302", "--authrpc.port", "8552"]
+
+  pigeon-gamma:
+    image: saiteja/pigeon-node:v2.0
+    container_name: pigeon-gamma
+    network_mode: "host"
+    environment:
+      - PIGEON_ID=pigeon-gamma
+    volumes:
+      - gamma_data:/root/.ethereum
+    command: ["--sepolia", "--syncmode", "snap", "--maxpeers", "50", "--port", "30303", "--authrpc.port", "8553"]
+
+volumes:
+  alpha_data:
+  beta_data:
+  gamma_data:

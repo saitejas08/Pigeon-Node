@@ -1,0 +1,21 @@
+# Databases & Blockchains
+*_data/
+vault_data/
+alpha_data/
+beta_data/
+gamma_data/
+.ethereum/
+
+# Node & Hardhat
+node_modules/
+artifacts/
+cache/
+typechain-types/
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# Go Build Artifacts
+go-ethereum/build/

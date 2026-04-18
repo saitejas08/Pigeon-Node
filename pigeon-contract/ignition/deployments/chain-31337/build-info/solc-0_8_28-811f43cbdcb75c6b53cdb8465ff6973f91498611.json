@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-811f43cbdcb75c6b53cdb8465ff6973f91498611",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.4.0"
+  },
+  "userSourceNameMap": {
+    "contracts/PigeonBounty.sol": "project/contracts/PigeonBounty.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/PigeonBounty.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\ncontract PigeonBounty {\n    // The wallet address of your Python Command Center\n    address public oracleNode; \n\n    struct Bounty {\n        address investigator;\n        uint256 amount;\n        bool isFulfilled;\n        string revealedIP;\n    }\n\n    // Mapping from an Ethereum tx_hash to a Bounty\n    mapping(string => Bounty) public bounties;\n\n    // Events allow your Python API to \"listen\" to the blockchain\n    event BountyPlaced(string txHash, address investigator, uint256 amount);\n    event BountyFulfilled(string txHash, string ipAddress);\n\n    constructor() {\n        // Whoever deploys this contract is the trusted Pigeon Oracle\n        oracleNode = msg.sender; \n    }\n\n    // --- 1. THE REQUEST (Investigator places the bounty) ---\n    function placeBounty(string memory txHash) external payable {\n        require(msg.value > 0, \"Bounty must be greater than 0 ETH\");\n        require(bounties[txHash].investigator == address(0), \"Bounty already exists for this transaction\");\n\n        bounties[txHash] = Bounty({\n            investigator: msg.sender,\n            amount: msg.value,\n            isFulfilled: false,\n            revealedIP: \"\"\n        });\n\n        emit BountyPlaced(txHash, msg.sender, msg.value);\n    }\n\n    // --- 2. THE DELIVERY & VERIFICATION (Python API fulfills it) ---\n    function fulfillBounty(\n        string memory txHash, \n        string memory ipAddress, \n        string memory salt, \n        bytes32 priorCommitment\n    ) external {\n        require(msg.sender == oracleNode, \"Security: Only the Pigeon Swarm can fulfill bounties\");\n        \n        Bounty storage b = bounties[txHash];\n        require(b.amount > 0, \"No bounty exists for this transaction\");\n        require(!b.isFulfilled, \"Bounty has already been fulfilled\");\n\n        // THE CRYPTOGRAPHIC PROOF:\n        // The contract hashes the raw IP and Salt exactly like the Python API did.\n        // It must perfectly match the commitment.\n        bytes32 calculatedHash = keccak256(abi.encodePacked(ipAddress, salt));\n        require(calculatedHash == priorCommitment, \"Zero-Knowledge Failure: Hash does not match commitment\");\n\n        // If the math proves out, update the state\n        b.revealedIP = ipAddress;\n        b.isFulfilled = true;\n\n        // Release the ETH bounty to the Command Center wallet\n        payable(oracleNode).transfer(b.amount);\n\n        // Broadcast the IP to the investigator\n        emit BountyFulfilled(txHash, ipAddress);\n    }\n}\n"
+      }
+    }
+  }
+}

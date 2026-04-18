@@ -1,0 +1,13 @@
+# Stage 1: Build the custom binary
+FROM golang:1.21-alpine as builder
+RUN apk add --no-cache gcc musl-dev linux-headers git
+WORKDIR /app
+COPY . .
+RUN go run build/ci.go install ./cmd/geth
+
+# Stage 2: Create the execution environment
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /app/build/bin/geth /usr/local/bin/
+EXPOSE 8545 8546 30303 30303/udp
+ENTRYPOINT ["geth"]
